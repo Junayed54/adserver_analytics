@@ -376,7 +376,7 @@
 from django.core.management.base import BaseCommand
 import pymysql
 from datetime import datetime
-from clickhouse_connect import Client
+from clickhouse_connect import get_client
 
 class Command(BaseCommand):
     help = 'Sync all MySQL tables to ClickHouse dynamically with Nullable columns'
@@ -397,9 +397,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"❌ MySQL connection failed: {e}"))
             return
 
-        # Connect to ClickHouse (HTTP client)
+        # Connect to ClickHouse using get_client
         try:
-            clickhouse_client = Client(
+            clickhouse_client = get_client(
                 host='localhost',
                 port=8123,
                 username='default',
@@ -473,12 +473,12 @@ class Command(BaseCommand):
                     name = col['Field']
                     mysql_type = col['Type']
                     ch_type = map_mysql_to_clickhouse(mysql_type)
-                    ch_type = f"Nullable({ch_type})"  # force all nullable
+                    ch_type = f"Nullable({ch_type})"
                     column_defs.append(f"`{name}` {ch_type}")
                     column_names.append(name)
                     ch_types.append(ch_type)
 
-                # Drop and recreate ClickHouse table (raw SQL)
+                # Drop and recreate ClickHouse table using raw SQL
                 ch_create = f'CREATE TABLE IF NOT EXISTS `{table}` ({", ".join(column_defs)}) ENGINE = MergeTree() ORDER BY tuple()'
                 clickhouse_client.command(f"DROP TABLE IF EXISTS `{table}`")
                 clickhouse_client.command(ch_create)
@@ -501,7 +501,8 @@ class Command(BaseCommand):
                         clickhouse_client.insert(
                             table=table,
                             data=data_batch,
-                            column_names=column_names
+                            column_names=column_names,
+                            column_types=None
                         )
                         data_batch = []
 
@@ -510,7 +511,8 @@ class Command(BaseCommand):
                     clickhouse_client.insert(
                         table=table,
                         data=data_batch,
-                        column_names=column_names
+                        column_names=column_names,
+                        column_types=None
                     )
 
                 self.stdout.write(self.style.SUCCESS(f"🚀 Inserted {len(rows)} rows into {table}"))
