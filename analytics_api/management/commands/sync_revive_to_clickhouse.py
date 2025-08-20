@@ -376,7 +376,7 @@
 from django.core.management.base import BaseCommand
 import pymysql
 from datetime import datetime
-from clickhouse_connect import get_client
+from clickhouse_connect import Client
 
 class Command(BaseCommand):
     help = 'Sync all MySQL tables to ClickHouse dynamically with Nullable columns'
@@ -397,9 +397,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"❌ MySQL connection failed: {e}"))
             return
 
-        # Connect to ClickHouse
+        # Connect to ClickHouse (HTTP client)
         try:
-            clickhouse_client = get_client(
+            clickhouse_client = Client(
                 host='localhost',
                 port=8123,
                 username='default',
@@ -454,6 +454,9 @@ class Command(BaseCommand):
             except:
                 return None
 
+        # Batch insert size
+        BATCH_SIZE = 5000
+
         # Sync each table
         for table in tables:
             try:
@@ -475,14 +478,9 @@ class Command(BaseCommand):
                     column_names.append(name)
                     ch_types.append(ch_type)
 
-                # Drop and recreate ClickHouse table
+                # Drop and recreate ClickHouse table (raw SQL)
+                ch_create = f'CREATE TABLE IF NOT EXISTS `{table}` ({", ".join(column_defs)}) ENGINE = MergeTree() ORDER BY tuple()'
                 clickhouse_client.command(f"DROP TABLE IF EXISTS `{table}`")
-                ch_create = f'''
-                    CREATE TABLE `{table}` (
-                        {', '.join(column_defs)}
-                    ) ENGINE = MergeTree()
-                    ORDER BY tuple()
-                '''
                 clickhouse_client.command(ch_create)
                 self.stdout.write(self.style.SUCCESS(f"✅ Created table {table} in ClickHouse"))
 
@@ -493,22 +491,28 @@ class Command(BaseCommand):
                     self.stdout.write("⚠️ No data to insert")
                     continue
 
-                # Prepare and insert data
-                data = []
-                for row in rows:
-                    clean_row = []
-                    for i, col_name in enumerate(column_names):
-                        value = row.get(col_name)
-                        clean_row.append(safe_cast(value, ch_types[i]))
-                    data.append(clean_row)
+                # Prepare and insert data in batches
+                data_batch = []
+                for idx, row in enumerate(rows, 1):
+                    clean_row = [safe_cast(row.get(col_name), ch_types[i]) for i, col_name in enumerate(column_names)]
+                    data_batch.append(clean_row)
 
-                # Insert into ClickHouse safely (avoiding comment_expression)
-                clickhouse_client.insert(
-                    table=table,
-                    data=data,
-                    column_names=column_names,
-                    column_types=None  # prevents ColumnDef comment_expression error
-                )
+                    if len(data_batch) >= BATCH_SIZE:
+                        clickhouse_client.insert(
+                            table=table,
+                            data=data_batch,
+                            column_names=column_names
+                        )
+                        data_batch = []
+
+                # Insert remaining rows
+                if data_batch:
+                    clickhouse_client.insert(
+                        table=table,
+                        data=data_batch,
+                        column_names=column_names
+                    )
+
                 self.stdout.write(self.style.SUCCESS(f"🚀 Inserted {len(rows)} rows into {table}"))
 
             except Exception as e:
