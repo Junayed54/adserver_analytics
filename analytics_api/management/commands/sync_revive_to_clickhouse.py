@@ -278,7 +278,7 @@ class Command(BaseCommand):
         # Get all MySQL tables
         try:
             mysql_cursor.execute("SHOW TABLES")
-            tables = [row[0] for row in mysql_cursor.fetchall()]
+            tables = [row['Tables_in_revive_db'] for row in mysql_cursor.fetchall()]
             self.stdout.write(self.style.SUCCESS(f"📋 Found {len(tables)} tables"))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ Failed to fetch table list: {e}"))
