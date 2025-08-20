@@ -238,7 +238,7 @@ class Command(BaseCommand):
             # server
             mysql_conn = pymysql.connect(
                 host='localhost',
-                user='root',
+                user='revive_user',
                 password='revive_pass',
                 database='revive',
                 cursorclass=pymysql.cursors.DictCursor
