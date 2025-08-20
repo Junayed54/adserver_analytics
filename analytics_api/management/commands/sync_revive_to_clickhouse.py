@@ -472,9 +472,9 @@ class Command(BaseCommand):
                 ch_types = []
 
                 for col in columns:
-                    name = col.get('Field')
-                    mysql_type = col.get('Type')
-                    nullable = col.get('Null') == 'YES'
+                    name = col['Field']
+                    mysql_type = col['Type']
+                    nullable = col['Null'] == 'YES'
                     ch_type = map_mysql_to_clickhouse(mysql_type)
                     ch_type = f"Nullable({ch_type})"  # force all nullable
                     column_defs.append(f"`{name}` {ch_type}")
@@ -502,7 +502,11 @@ class Command(BaseCommand):
                 # Prepare and insert data in chunks
                 data = []
                 for row in rows:
-                    data.append([safe_cast(row.get(col), ch_types[i]) for i, col in enumerate(column_names)])
+                    try:
+                        data.append([safe_cast(row[col], ch_types[i]) for i, col in enumerate(column_names)])
+                    except Exception as row_err:
+                        self.stdout.write(self.style.ERROR(f"⚠️ Row error in `{table}`: {row_err}"))
+                        self.stdout.write(str(row))
 
                 for chunk in chunked(data, 1000):
                     clickhouse_client.insert(table, chunk, column_names=column_names)
