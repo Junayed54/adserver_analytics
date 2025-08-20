@@ -376,7 +376,7 @@
 from django.core.management.base import BaseCommand
 import pymysql
 from datetime import datetime
-from clickhouse_driver import Client as ClickHouseClient
+from clickhouse_connect import get_client
 
 class Command(BaseCommand):
     help = 'Sync all MySQL tables to ClickHouse dynamically with Nullable columns'
@@ -397,12 +397,12 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"❌ MySQL connection failed: {e}"))
             return
 
-        # Connect to ClickHouse
+        # Connect to ClickHouse using clickhouse-connect
         try:
-            clickhouse_client = ClickHouseClient(
+            clickhouse_client = get_client(
                 host='localhost',
                 port=8123,
-                user='default',
+                username='default',
                 password='',
                 database='re_click_server'
             )
@@ -475,14 +475,14 @@ class Command(BaseCommand):
                     ch_types.append(ch_type)
 
                 # Drop and recreate ClickHouse table
-                clickhouse_client.execute(f"DROP TABLE IF EXISTS `{table}`")
+                clickhouse_client.command(f"DROP TABLE IF EXISTS `{table}`")
                 ch_create = f'''
                     CREATE TABLE `{table}` (
                         {', '.join(column_defs)}
                     ) ENGINE = MergeTree()
                     ORDER BY tuple()
                 '''
-                clickhouse_client.execute(ch_create)
+                clickhouse_client.command(ch_create)
                 self.stdout.write(self.style.SUCCESS(f"✅ Created table {table} in ClickHouse"))
 
                 # Fetch data from MySQL
@@ -497,9 +497,10 @@ class Command(BaseCommand):
                 for row in rows:
                     data.append([safe_cast(row.get(col), ch_types[i]) for i, col in enumerate(column_names)])
 
-                clickhouse_client.execute(
-                    f"INSERT INTO `{table}` ({', '.join(column_names)}) VALUES",
-                    data
+                clickhouse_client.insert(
+                    table=table,
+                    data=data,
+                    column_names=column_names
                 )
                 self.stdout.write(self.style.SUCCESS(f"🚀 Inserted {len(rows)} rows into {table}"))
 
