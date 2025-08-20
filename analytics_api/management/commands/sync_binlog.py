@@ -76,7 +76,8 @@ class Command(BaseCommand):
             try:
                 stream = BinLogStreamReader(
                     connection_settings={
-                        'host': '161.97.141.58',
+                        # 'host': '161.97.141.58',
+                        'host': 'localhost',
                         'user': 'binlog_user',
                         'passwd': 'binlog_pass',
                         'database': 'revive'
