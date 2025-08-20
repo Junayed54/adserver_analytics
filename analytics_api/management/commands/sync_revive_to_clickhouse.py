@@ -466,7 +466,7 @@ class Command(BaseCommand):
 
                 # Get column definitions using INFORMATION_SCHEMA
                 mysql_cursor.execute(f"""
-                    SELECT COLUMN_NAME AS Field, COLUMN_TYPE AS Type, IS_NULLABLE AS Null
+                    SELECT COLUMN_NAME AS Field, COLUMN_TYPE AS Type, IS_NULLABLE AS `Null`
                     FROM INFORMATION_SCHEMA.COLUMNS
                     WHERE TABLE_SCHEMA = 'revive' AND TABLE_NAME = '{table}'
                 """)
