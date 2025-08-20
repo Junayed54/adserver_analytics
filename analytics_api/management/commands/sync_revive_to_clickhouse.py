@@ -377,7 +377,6 @@ from django.core.management.base import BaseCommand
 import pymysql
 from clickhouse_connect import get_client
 from datetime import datetime
-from more_itertools import chunked
 
 class Command(BaseCommand):
     help = 'Sync all MySQL tables to ClickHouse dynamically with Nullable columns'
@@ -455,6 +454,11 @@ class Command(BaseCommand):
             except:
                 return None
 
+        # Native chunking
+        def chunked(iterable, size):
+            for i in range(0, len(iterable), size):
+                yield iterable[i:i + size]
+
         # Sync each table
         for table in tables:
             try:
@@ -468,9 +472,9 @@ class Command(BaseCommand):
                 ch_types = []
 
                 for col in columns:
-                    name = col['Field']
-                    mysql_type = col['Type']
-                    nullable = col['Null'] == 'YES'
+                    name = col.get('Field')
+                    mysql_type = col.get('Type')
+                    nullable = col.get('Null') == 'YES'
                     ch_type = map_mysql_to_clickhouse(mysql_type)
                     ch_type = f"Nullable({ch_type})"  # force all nullable
                     column_defs.append(f"`{name}` {ch_type}")
