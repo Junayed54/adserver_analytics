@@ -397,7 +397,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"❌ MySQL connection failed: {e}"))
             return
 
-        # Connect to ClickHouse using clickhouse-connect
+        # Connect to ClickHouse
         try:
             clickhouse_client = get_client(
                 host='localhost',
@@ -433,6 +433,8 @@ class Command(BaseCommand):
                 return 'DateTime'
             elif 'date' in mysql_type:
                 return 'Date'
+            elif 'enum' in mysql_type:
+                return 'String'
             else:
                 return 'String'
 
@@ -465,9 +467,9 @@ class Command(BaseCommand):
                 ch_types = []
 
                 for col in columns:
-                    name = col.get('Field')
-                    mysql_type = col.get('Type')
-                    nullable = col.get('Null') == 'YES'
+                    name = col['Field']
+                    mysql_type = col['Type']
+                    nullable = col['Null'] == 'YES'
                     ch_type = map_mysql_to_clickhouse(mysql_type)
                     ch_type = f"Nullable({ch_type})"  # force all nullable
                     column_defs.append(f"`{name}` {ch_type}")
@@ -495,7 +497,11 @@ class Command(BaseCommand):
                 # Prepare and insert data
                 data = []
                 for row in rows:
-                    data.append([safe_cast(row.get(col), ch_types[i]) for i, col in enumerate(column_names)])
+                    clean_row = []
+                    for i, col_name in enumerate(column_names):
+                        value = row.get(col_name)
+                        clean_row.append(safe_cast(value, ch_types[i]))
+                    data.append(clean_row)
 
                 clickhouse_client.insert(
                     table=table,
