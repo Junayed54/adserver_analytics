@@ -397,7 +397,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"❌ MySQL connection failed: {e}"))
             return
 
-        # Connect to ClickHouse using get_client
+        # Connect to ClickHouse
         try:
             clickhouse_client = get_client(
                 host='localhost',
@@ -454,7 +454,6 @@ class Command(BaseCommand):
             except:
                 return None
 
-        # Batch insert size
         BATCH_SIZE = 5000
 
         # Sync each table
@@ -478,10 +477,10 @@ class Command(BaseCommand):
                     column_names.append(name)
                     ch_types.append(ch_type)
 
-                # Drop and recreate ClickHouse table using raw SQL
-                ch_create = f'CREATE TABLE IF NOT EXISTS `{table}` ({", ".join(column_defs)}) ENGINE = MergeTree() ORDER BY tuple()'
+                # Drop and create ClickHouse table using raw SQL
                 clickhouse_client.command(f"DROP TABLE IF EXISTS `{table}`")
-                clickhouse_client.command(ch_create)
+                create_sql = f"CREATE TABLE `{table}` ({', '.join(column_defs)}) ENGINE = MergeTree() ORDER BY tuple()"
+                clickhouse_client.command(create_sql)
                 self.stdout.write(self.style.SUCCESS(f"✅ Created table {table} in ClickHouse"))
 
                 # Fetch data from MySQL
@@ -491,29 +490,27 @@ class Command(BaseCommand):
                     self.stdout.write("⚠️ No data to insert")
                     continue
 
-                # Prepare and insert data in batches
-                data_batch = []
-                for idx, row in enumerate(rows, 1):
-                    clean_row = [safe_cast(row.get(col_name), ch_types[i]) for i, col_name in enumerate(column_names)]
-                    data_batch.append(clean_row)
+                # Prepare INSERT values as raw SQL
+                values_list = []
+                for row in rows:
+                    row_values = []
+                    for i, col_name in enumerate(column_names):
+                        val = safe_cast(row.get(col_name), ch_types[i])
+                        if val is None:
+                            row_values.append("NULL")
+                        elif 'String' in ch_types[i] or 'DateTime' in ch_types[i] or 'Date' in ch_types[i]:
+                            # Escape single quotes
+                            safe_val = str(val).replace("'", "\\'")
+                            row_values.append(f"'{safe_val}'")
+                        else:
+                            row_values.append(str(val))
+                    values_list.append(f"({', '.join(row_values)})")
 
-                    if len(data_batch) >= BATCH_SIZE:
-                        clickhouse_client.insert(
-                            table=table,
-                            data=data_batch,
-                            column_names=column_names,
-                            column_types=None
-                        )
-                        data_batch = []
-
-                # Insert remaining rows
-                if data_batch:
-                    clickhouse_client.insert(
-                        table=table,
-                        data=data_batch,
-                        column_names=column_names,
-                        column_types=None
-                    )
+                # Insert in batches
+                for i in range(0, len(values_list), BATCH_SIZE):
+                    batch = values_list[i:i+BATCH_SIZE]
+                    insert_sql = f"INSERT INTO `{table}` ({', '.join(column_names)}) VALUES {', '.join(batch)}"
+                    clickhouse_client.command(insert_sql)
 
                 self.stdout.write(self.style.SUCCESS(f"🚀 Inserted {len(rows)} rows into {table}"))
 
