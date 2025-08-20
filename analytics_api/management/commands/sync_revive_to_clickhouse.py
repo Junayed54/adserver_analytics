@@ -382,7 +382,7 @@ class Command(BaseCommand):
     help = 'Sync all MySQL tables to ClickHouse dynamically with Nullable columns'
 
     def handle(self, *args, **options):
-        # MySQL connection
+        # Connect to MySQL
         try:
             mysql_conn = pymysql.connect(
                 host='localhost',
@@ -397,7 +397,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"❌ MySQL connection failed: {e}"))
             return
 
-        # ClickHouse connection
+        # Connect to ClickHouse
         try:
             clickhouse_client = get_client(
                 host='localhost',
@@ -411,7 +411,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"❌ ClickHouse connection failed: {e}"))
             return
 
-        # Fetch MySQL tables
+        # Get all MySQL tables
         try:
             mysql_cursor.execute("SHOW TABLES")
             tables = [list(row.values())[0] for row in mysql_cursor.fetchall()]
