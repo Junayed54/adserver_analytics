@@ -436,11 +436,13 @@ class Command(BaseCommand):
             else:
                 return 'String'
 
-        # Safe casting
+        # Safe casting with dictionary flattening
         def safe_cast(value, ch_type):
             if value is None:
                 return None
             try:
+                if isinstance(value, dict):
+                    return str(value)  # flatten dicts to strings
                 if 'Int' in ch_type:
                     return int(value)
                 elif 'Float' in ch_type:
