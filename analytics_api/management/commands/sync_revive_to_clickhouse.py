@@ -261,13 +261,15 @@ class Command(BaseCommand):
             # )
             
             # server
-            mysql_conn = pymysql.connect(
+            clickhouse_client = get_client(
                 host='localhost',
-                user='root',
-                password='junayed',
-                database='re_click_server',
-                cursorclass=pymysql.cursors.DictCursor
+                port=8123,
+                username='default',
+                password='',
+                database='re_click_server'
             )
+            
+            
             self.stdout.write(self.style.SUCCESS("✅ Connected to ClickHouse"))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ ClickHouse connection failed: {e}"))
