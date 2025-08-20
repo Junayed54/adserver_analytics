@@ -469,7 +469,6 @@ class Command(BaseCommand):
                 for col in columns:
                     name = col['Field']
                     mysql_type = col['Type']
-                    nullable = col['Null'] == 'YES'
                     ch_type = map_mysql_to_clickhouse(mysql_type)
                     ch_type = f"Nullable({ch_type})"  # force all nullable
                     column_defs.append(f"`{name}` {ch_type}")
@@ -503,10 +502,12 @@ class Command(BaseCommand):
                         clean_row.append(safe_cast(value, ch_types[i]))
                     data.append(clean_row)
 
+                # Insert into ClickHouse safely (avoiding comment_expression)
                 clickhouse_client.insert(
                     table=table,
                     data=data,
-                    column_names=column_names
+                    column_names=column_names,
+                    column_types=None  # prevents ColumnDef comment_expression error
                 )
                 self.stdout.write(self.style.SUCCESS(f"🚀 Inserted {len(rows)} rows into {table}"))
 
