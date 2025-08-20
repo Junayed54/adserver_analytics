@@ -464,8 +464,12 @@ class Command(BaseCommand):
             try:
                 self.stdout.write(f"\n🔄 Syncing table: {table}")
 
-                # Get column definitions
-                mysql_cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+                # Get column definitions using INFORMATION_SCHEMA
+                mysql_cursor.execute(f"""
+                    SELECT COLUMN_NAME AS Field, COLUMN_TYPE AS Type, IS_NULLABLE AS Null
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'revive' AND TABLE_NAME = '{table}'
+                """)
                 columns = mysql_cursor.fetchall()
                 column_defs = []
                 column_names = []
