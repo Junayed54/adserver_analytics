@@ -182,7 +182,9 @@ class Command(BaseCommand):
             if val is None:
                 return "NULL"
             if 'String' in ch_type or 'DateTime' in ch_type or 'Date' in ch_type:
-                return f"'{str(val).replace(\"'\", \"\\'\")}'"
+                escaped_val = str(val).replace("'", "\\'")
+                return f"'{escaped_val}'"
+
             return str(val)
 
         def get_table_schema(table):
