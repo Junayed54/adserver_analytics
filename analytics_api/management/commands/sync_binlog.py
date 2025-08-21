@@ -49,17 +49,96 @@
 #                         self.stderr.write(f"❌ Error syncing to {table}: {e}")
 
 
+# this was worked
+# from django.core.management.base import BaseCommand
+# from pymysqlreplication import BinLogStreamReader
+# from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent
+# from datetime import datetime
+# import time
+# import clickhouse_connect
+
+
+# class Command(BaseCommand):
+#     help = 'Sync MySQL binlog to ClickHouse using raw SQL inserts'
+
+#     def handle(self, *args, **kwargs):
+#         # ClickHouse client
+#         client = clickhouse_connect.get_client(
+#             host='localhost',
+#             username='default',
+#             password='',
+#             database='re_click_server'
+#         )
+
+#         self.stdout.write(self.style.SUCCESS("🚀 ClickHouse client connected"))
+
+#         while True:
+#             try:
+#                 stream = BinLogStreamReader(
+#                     connection_settings={
+#                         # 'host': '161.97.141.58',
+#                         'host': 'localhost',
+#                         'user': 'binlog_user',
+#                         'passwd': 'binlog_pass',
+#                         'database': 'revive'
+#                     },
+#                     server_id=2,
+#                     blocking=True,
+#                     resume_stream=True,
+#                     only_events=[WriteRowsEvent, UpdateRowsEvent],
+#                     only_schemas=['revive']
+#                 )
+
+#                 self.stdout.write(self.style.SUCCESS("🚀 Binlog stream started"))
+
+#                 for binlogevent in stream:
+#                     table = binlogevent.table
+#                     for row in binlogevent.rows:
+#                         data = row.get('values') or row.get('after_values')
+#                         if not data:
+#                             continue
+
+#                         # Build raw SQL INSERT
+#                         columns = list(data.keys())
+#                         values = []
+#                         for col in columns:
+#                             val = data[col]
+#                             if val is None:
+#                                 values.append("NULL")
+#                             elif isinstance(val, (str, datetime)):
+#                                 safe_val = str(val).replace("'", "\\'")
+#                                 values.append(f"'{safe_val}'")
+#                             else:
+#                                 values.append(str(val))
+
+#                         insert_sql = f"INSERT INTO `{table}` ({', '.join(columns)}) VALUES ({', '.join(values)})"
+
+#                         try:
+#                             client.command(insert_sql)
+#                             self.stdout.write(f"✅ Synced row to {table}: {data}")
+#                         except Exception as e:
+#                             self.stderr.write(f"❌ Error syncing to {table}: {e}")
+
+#                 stream.close()
+
+#             except Exception as e:
+#                 self.stderr.write(f"⚠️ Binlog stream error: {e}, retrying in 5 seconds...")
+#                 time.sleep(5)
+
+
+
 
 from django.core.management.base import BaseCommand
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent
 from datetime import datetime
+from queue import Queue
+from threading import Thread
 import time
 import clickhouse_connect
 
-
 class Command(BaseCommand):
-    help = 'Sync MySQL binlog to ClickHouse using raw SQL inserts'
+    help = 'Sync MySQL binlog to ClickHouse using pipelined inserts'
 
     def handle(self, *args, **kwargs):
         # ClickHouse client
@@ -69,14 +148,50 @@ class Command(BaseCommand):
             password='',
             database='re_click_server'
         )
-
         self.stdout.write(self.style.SUCCESS("🚀 ClickHouse client connected"))
 
+        # Queue for pipelining
+        event_queue = Queue(maxsize=1000)
+
+        # Worker thread for ClickHouse inserts
+        def clickhouse_worker():
+            batch_size = 50
+            flush_interval = 2  # seconds
+            buffers = {}
+
+            last_flush = time.time()
+
+            while True:
+                try:
+                    table, data = event_queue.get(timeout=1)
+                except:
+                    table, data = None, None
+
+                if table and data:
+                    buffers.setdefault(table, []).append(data)
+
+                now = time.time()
+                if now - last_flush >= flush_interval or any(len(buf) >= batch_size for buf in buffers.values()):
+                    for tbl, rows in buffers.items():
+                        if not rows:
+                            continue
+                        columns = list(rows[0].keys())
+                        try:
+                            client.insert(tbl, rows, column_names=columns)
+                            self.stdout.write(f"✅ Synced {len(rows)} rows to {tbl}")
+                        except Exception as e:
+                            self.stderr.write(f"❌ Error syncing batch to {tbl}: {e}")
+                        buffers[tbl] = []
+                    last_flush = now
+
+        # Start worker thread
+        Thread(target=clickhouse_worker, daemon=True).start()
+
+        # Start binlog stream
         while True:
             try:
                 stream = BinLogStreamReader(
                     connection_settings={
-                        # 'host': '161.97.141.58',
                         'host': 'localhost',
                         'user': 'binlog_user',
                         'passwd': 'binlog_pass',
@@ -98,30 +213,21 @@ class Command(BaseCommand):
                         if not data:
                             continue
 
-                        # Build raw SQL INSERT
-                        columns = list(data.keys())
-                        values = []
-                        for col in columns:
-                            val = data[col]
-                            if val is None:
-                                values.append("NULL")
-                            elif isinstance(val, (str, datetime)):
-                                safe_val = str(val).replace("'", "\\'")
-                                values.append(f"'{safe_val}'")
+                        # Sanitize values
+                        clean_data = {}
+                        for col, val in data.items():
+                            if isinstance(val, datetime):
+                                clean_data[col] = val.isoformat()
                             else:
-                                values.append(str(val))
-
-                        insert_sql = f"INSERT INTO `{table}` ({', '.join(columns)}) VALUES ({', '.join(values)})"
+                                clean_data[col] = val
 
                         try:
-                            client.command(insert_sql)
-                            self.stdout.write(f"✅ Synced row to {table}: {data}")
+                            event_queue.put((table, clean_data), timeout=1)
                         except Exception as e:
-                            self.stderr.write(f"❌ Error syncing to {table}: {e}")
+                            self.stderr.write(f"⚠️ Queue full, dropping event for {table}: {e}")
 
                 stream.close()
 
             except Exception as e:
                 self.stderr.write(f"⚠️ Binlog stream error: {e}, retrying in 5 seconds...")
                 time.sleep(5)
-
