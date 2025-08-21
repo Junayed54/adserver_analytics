@@ -127,7 +127,6 @@
 
 
 
-
 from django.core.management.base import BaseCommand
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent
@@ -158,7 +157,6 @@ class Command(BaseCommand):
             batch_size = 50
             flush_interval = 2  # seconds
             buffers = {}
-
             last_flush = time.time()
 
             while True:
@@ -177,8 +175,9 @@ class Command(BaseCommand):
                             continue
                         columns = list(rows[0].keys())
                         try:
+                            self.stdout.write(f"🚚 Preparing to insert {len(rows)} rows into {tbl}")
                             client.insert(tbl, rows, column_names=columns)
-                            self.stdout.write(f"✅ Synced {len(rows)} rows to {tbl}")
+                            self.stdout.write(self.style.SUCCESS(f"✅ Synced {len(rows)} rows to {tbl}"))
                         except Exception as e:
                             self.stderr.write(f"❌ Error syncing batch to {tbl}: {e}")
                         buffers[tbl] = []
@@ -208,6 +207,8 @@ class Command(BaseCommand):
 
                 for binlogevent in stream:
                     table = binlogevent.table
+                    self.stdout.write(f"📦 Binlog event detected for table: {table}")
+
                     for row in binlogevent.rows:
                         data = row.get('values') or row.get('after_values')
                         if not data:
@@ -220,6 +221,8 @@ class Command(BaseCommand):
                                 clean_data[col] = val.isoformat()
                             else:
                                 clean_data[col] = val
+
+                        self.stdout.write(f"➡️ Cleaned row data for {table}: {clean_data}")
 
                         try:
                             event_queue.put((table, clean_data), timeout=1)
