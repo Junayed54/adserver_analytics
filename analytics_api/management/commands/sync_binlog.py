@@ -134,13 +134,24 @@ from datetime import datetime
 from queue import Queue
 from threading import Thread
 import time
+import pymysql
 import clickhouse_connect
 
 class Command(BaseCommand):
-    help = 'Sync MySQL binlog to ClickHouse using pipelined inserts'
+    help = 'Sync MySQL binlog to ClickHouse using pipelined inserts (safe schema)'
 
     def handle(self, *args, **kwargs):
-        # ClickHouse client
+        # Connect to MySQL for schema lookup
+        mysql_conn = pymysql.connect(
+            host='localhost',
+            user='re_server_user',
+            password='re_server_pass',
+            database='revive',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        mysql_cursor = mysql_conn.cursor()
+
+        # Connect to ClickHouse
         client = clickhouse_connect.get_client(
             host='localhost',
             username='default',
@@ -149,13 +160,48 @@ class Command(BaseCommand):
         )
         self.stdout.write(self.style.SUCCESS("🚀 ClickHouse client connected"))
 
+        # Build column type map from MySQL
+        table_columns = {}
+
+        def map_mysql_to_clickhouse(mysql_type):
+            mysql_type = mysql_type.lower()
+            if 'int' in mysql_type:
+                return 'Int32'
+            elif 'bigint' in mysql_type:
+                return 'Int64'
+            elif 'float' in mysql_type or 'double' in mysql_type or 'decimal' in mysql_type:
+                return 'Float64'
+            elif 'datetime' in mysql_type or 'timestamp' in mysql_type:
+                return 'DateTime'
+            elif 'date' in mysql_type:
+                return 'Date'
+            else:
+                return 'String'
+
+        def sanitize_value(val, ch_type):
+            if val is None:
+                return "NULL"
+            if 'String' in ch_type or 'DateTime' in ch_type or 'Date' in ch_type:
+                return f"'{str(val).replace(\"'\", \"\\'\")}'"
+            return str(val)
+
+        def get_table_schema(table):
+            if table in table_columns:
+                return table_columns[table]
+            mysql_cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+            columns = mysql_cursor.fetchall()
+            column_names = [col['Field'] for col in columns]
+            column_types = [map_mysql_to_clickhouse(col['Type']) for col in columns]
+            table_columns[table] = (column_names, column_types)
+            return column_names, column_types
+
         # Queue for pipelining
         event_queue = Queue(maxsize=1000)
 
         # Worker thread for ClickHouse inserts
         def clickhouse_worker():
             batch_size = 50
-            flush_interval = 2  # seconds
+            flush_interval = 2
             buffers = {}
             last_flush = time.time()
 
@@ -173,10 +219,17 @@ class Command(BaseCommand):
                     for tbl, rows in buffers.items():
                         if not rows:
                             continue
-                        columns = list(rows[0].keys())
+                        column_names, column_types = get_table_schema(tbl)
+                        values_sql = []
+                        for row in rows:
+                            row_sql = []
+                            for i, col in enumerate(column_names):
+                                val = sanitize_value(row.get(col), column_types[i])
+                                row_sql.append(val)
+                            values_sql.append(f"({', '.join(row_sql)})")
                         try:
-                            self.stdout.write(f"🚚 Preparing to insert {len(rows)} rows into {tbl}")
-                            client.insert(tbl, rows, column_names=columns)
+                            insert_sql = f"INSERT INTO `{tbl}` ({', '.join(column_names)}) VALUES {', '.join(values_sql)}"
+                            client.command(insert_sql)
                             self.stdout.write(self.style.SUCCESS(f"✅ Synced {len(rows)} rows to {tbl}"))
                         except Exception as e:
                             self.stderr.write(f"❌ Error syncing batch to {tbl}: {e}")
@@ -214,7 +267,6 @@ class Command(BaseCommand):
                         if not data:
                             continue
 
-                        # Sanitize values
                         clean_data = {}
                         for col, val in data.items():
                             if isinstance(val, datetime):
