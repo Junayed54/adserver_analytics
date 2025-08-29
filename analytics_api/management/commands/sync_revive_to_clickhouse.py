@@ -372,7 +372,7 @@
 #         self.stdout.write(self.style.SUCCESS("\n🎉 Sync complete!"))
 
 
-
+# server
 from django.core.management.base import BaseCommand
 import pymysql
 from datetime import datetime
@@ -386,9 +386,9 @@ class Command(BaseCommand):
         try:
             mysql_conn = pymysql.connect(
                 host='localhost',
-                user='re_server_user',
-                password='re_server_pass',
-                database='revive',
+                user='revive_user',
+                password='revive_pass',
+                database='revive_db',
                 cursorclass=pymysql.cursors.DictCursor
             )
             mysql_cursor = mysql_conn.cursor()
