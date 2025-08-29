@@ -386,8 +386,8 @@ class Command(BaseCommand):
         try:
             mysql_conn = pymysql.connect(
                 host='localhost',
-                user='revive_user',
-                password='revive_pass',
+                user='re_server_user',
+                password='re_server_pass',
                 database='revive_db',
                 cursorclass=pymysql.cursors.DictCursor
             )
