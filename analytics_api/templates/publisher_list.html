@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Publisher List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container my-5">
+    <h2 class="mb-4">Publisher List</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Publisher Name</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Total Zones</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for publisher in publishers %}
+            <tr>
+                <td>{{ publisher.publisher_id }}</td>
+                <td>{{ publisher.publisher_name }}</td>
+                <td>{{ publisher.contact_name }}</td>
+                <td>{{ publisher.contact_email }}</td>
+                <td>{{ publisher.total_zones }}</td>
+                <td>
+                    <a href="{% url 'publisher_dashboard' publisher.publisher_id %}" 
+                       class="btn btn-sm btn-primary">
+                        Dashboard
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No publishers found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div>
+        <!-- Revive Adserver iFrame Tag - Generated with Revive Adserver v5.5.2 -->
+        <iframe id='a0372ab8' name='a0372ab8' src='http://localhost/revive/www/delivery/afr.php?zoneid=1&amp;cb=INSERT_RANDOM_NUMBER_HERE' frameborder='0' scrolling='no' width='230' height='154' allow='autoplay'><a href='http://localhost/revive/www/delivery/ck.php?n=a27b6c2b&amp;cb=INSERT_RANDOM_NUMBER_HERE' target='_blank'><img src='http://localhost/revive/www/delivery/avw.php?zoneid=1&amp;cb=INSERT_RANDOM_NUMBER_HERE&amp;n=a27b6c2b' border='0' alt='' /></a></iframe>
+
+    </div>
+    <div>
+        <!-- Revive Adserver iFrame Tag - Generated with Revive Adserver v5.5.2 -->
+        <iframe id='ac006c08' name='ac006c08' src='http://localhost/revive/www/delivery/afr.php?zoneid=4&amp;cb=INSERT_RANDOM_NUMBER_HERE' frameborder='0' scrolling='no' width='600' height='200' allow='autoplay'><a href='http://localhost/revive/www/delivery/ck.php?n=aec489eb&amp;cb=INSERT_RANDOM_NUMBER_HERE' target='_blank'><img src='http://localhost/revive/www/delivery/avw.php?zoneid=4&amp;cb=INSERT_RANDOM_NUMBER_HERE&amp;n=aec489eb' border='0' alt='' /></a></iframe>
+
+    </div>
+    <div class="container mt-5">
+        <h1 class="mb-4">Admin Dashboard</h1>
+
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header">
+                Overall Summary
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-2">
+                        <h5>Total Impressions</h5>
+                        <p class="h3 text-primary">{{ total_impressions|default:"0" }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <h5>Total Clicks</h5>
+                        <p class="h3 text-success">{{ total_clicks|default:"0" }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <h5>Total Campaigns</h5>
+                        <p class="h3 text-info">{{ total_campaigns|default:"0" }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <h5>Total Ads</h5>
+                        <p class="h3 text-warning">{{ total_ads|default:"0" }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <h5>Total Advertisers</h5>
+                        <p class="h3 text-danger">{{ total_advertisers|default:"0" }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <h5>Overall CTR</h5>
+                        <p class="h3 text-dark">{{ ctr|default:"0.00" }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                Daily Performance (Last 30 Days)
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Top 10 Ads
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for banner in banners %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ banner.id }} - {{ banner.type }}
+                                    <span class="badge badge-primary badge-pill">{{ banner.impressions }} Impr.</span>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-muted">No ads data available.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Top 10 Zones
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for zone in zones %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ zone.id }} - {{ zone.name }}
+                                    <span class="badge badge-primary badge-pill">{{ zone.impressions }} Impr.</span>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-muted">No zones data available.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Top 10 Advertisers
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for advertiser in advertisers %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ advertiser.id }}
+                                    <span class="badge badge-primary badge-pill">{{ advertiser.impressions }} Impr.</span>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-muted">No advertiser data available.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('dailyChart').getContext('2d');
+        const dailyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: JSON.parse('{{ chart_labels|safe }}'),
+                datasets: [{
+                    label: 'Impressions',
+                    data: JSON.parse('{{ chart_impressions|safe }}'),
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }, {
+                    label: 'Clicks',
+                    data: JSON.parse('{{ chart_clicks|safe }}'),
+                    borderColor: 'rgb(255, 99, 132)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

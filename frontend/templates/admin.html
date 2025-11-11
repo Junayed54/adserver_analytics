@@ -1,0 +1,342 @@
+
+{% extends 'Html/src/html/index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card custom-card">
+            <div class="card-header">
+                <div class="card-title">Dashboard Overview</div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                                <div class="card overflow-hidden">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-top justify-content-between">
+                                            <div>
+                                                <p class="mb-1 text-muted">Advertisers</p>
+                                                <h2 class="fw-bold mb-0 lh-1" id="total_advertisers">...</h2>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <span class="avatar avatar-md bg-primary-transparent text-primary">
+                                                    <i class="ri-user-2-line fs-20"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                                <div class="card overflow-hidden">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-top justify-content-between">
+                                            <div>
+                                                <p class="mb-1 text-muted">Campaigns</p>
+                                                <h2 class="fw-bold mb-0 lh-1" id="total_campaigns">...</h2>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <span class="avatar avatar-md bg-success-transparent text-success">
+                                                    <i class="ri-megaphone-line fs-20"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                                <div class="card overflow-hidden">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-top justify-content-between">
+                                            <div>
+                                                <p class="mb-1 text-muted">Banners</p>
+                                                <h2 class="fw-bold mb-0 lh-1" id="total_banners">...</h2>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <span class="avatar avatar-md bg-info-transparent text-info">
+                                                    <i class="ri-image-line fs-20"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                                <div class="card overflow-hidden">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-top justify-content-between">
+                                            <div>
+                                                <p class="mb-1 text-muted">Zones</p>
+                                                <h2 class="fw-bold mb-0 lh-1" id="total_zones">...</h2>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <span class="avatar avatar-md bg-warning-transparent text-warning">
+                                                    <i class="ri-global-line fs-20"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                                <div class="card overflow-hidden">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-top justify-content-between">
+                                            <div>
+                                                <p class="mb-1 text-muted">Impressions</p>
+                                                <h2 class="fw-bold mb-0 lh-1" id="total_impressions">...</h2>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <span class="avatar avatar-md bg-dark-transparent text-dark">
+                                                    <i class="ri-eye-line fs-20"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                                <div class="card overflow-hidden">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-top justify-content-between">
+                                            <div>
+                                                <p class="mb-1 text-muted">Clicks</p>
+                                                <h2 class="fw-bold mb-0 lh-1" id="total_clicks">...</h2>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <span class="avatar avatar-md bg-danger-transparent text-danger">
+                                                    <i class="ri-mouse-line fs-20"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-8 col-lg-6 col-md-12">
+                        <div class="card custom-card">
+                            <div class="card-header">
+                                <div class="card-title">Impressions vs. Clicks</div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="impressionsClicksChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="col-xl-4 col-lg-6 col-md-6">
+                        <div class="card overflow-hidden">
+                            <div class="card-body">
+                                <div class="d-flex align-items-top justify-content-between">
+                                    <div>
+                                        <p class="mb-1 text-muted">CTR</p>
+                                        <h2 class="fw-bold mb-0 lh-1" id="ctr">...</h2>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <span class="avatar avatar-md bg-secondary-transparent text-secondary">
+                                            <i class="ri-percent-line fs-20"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card custom-card mt-4">
+            <div class="card-header">
+                <div class="card-title">Account Management</div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="card custom-card">
+                            <div class="card-header">
+                                <div class="card-title">Publishers</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table text-nowrap table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">ID</th>
+                                                <th scope="col">Name</th>
+                                                <th scope="col">Contact Name</th>
+                                                <th scope="col">Email</th>
+                                                <th scope="col">Username</th>
+                                                <th scope="col">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="publishers-table-body">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-xl-12">
+                        <div class="card custom-card">
+                            <div class="card-header">
+                                <div class="card-title">Advertisers</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table text-nowrap table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">ID</th>
+                                                <th scope="col">Name</th>
+                                                <th scope="col">Contact Name</th>
+                                                <th scope="col">Email</th>
+                                                <th scope="col">Username</th>
+                                                <th scope="col">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="advertisers-table-body">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/admin-dashboard/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                document.getElementById('total_advertisers').innerText = data.total_advertisers;
+                document.getElementById('total_campaigns').innerText = data.total_campaigns;
+                document.getElementById('total_banners').innerText = data.total_banners;
+                document.getElementById('total_zones').innerText = data.total_zones;
+                document.getElementById('total_impressions').innerText = data.total_impressions.toLocaleString();
+                document.getElementById('total_clicks').innerText = data.total_clicks.toLocaleString();
+                document.getElementById('ctr').innerText = `${data.ctr}%`;
+
+                const chartData = {
+                    labels: ['Impressions', 'Clicks'],
+                    datasets: [{
+                        label: 'Impressions & Clicks',
+                        data: [data.total_impressions, data.total_clicks],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                };
+
+                const chartConfig = {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                };
+                const ctx = document.getElementById('impressionsClicksChart').getContext('2d');
+                new Chart(ctx, chartConfig);
+            } else {
+                console.error('API response data is empty or invalid.');
+            }
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+            document.getElementById('total_advertisers').innerText = 'N/A';
+            document.getElementById('total_campaigns').innerText = 'N/A';
+            document.getElementById('total_banners').innerText = 'N/A';
+            document.getElementById('total_zones').innerText = 'N/A';
+            document.getElementById('total_impressions').innerText = 'N/A';
+            document.getElementById('total_clicks').innerText = 'N/A';
+            document.getElementById('ctr').innerText = 'N/A';
+        });
+});
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const publishersTableBody = document.getElementById('publishers-table-body');
+    const advertisersTableBody = document.getElementById('advertisers-table-body');
+    
+    // Function to populate a table with data
+    function populateTable(data, tableBody, dashboardUrlBase) {
+        tableBody.innerHTML = ''; // Clear existing content
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No accounts found.</td></tr>';
+            return;
+        }
+
+        data.forEach(account => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${account.id}</td>
+                <td>${account.name}</td>
+                <td>${account.contact_name || 'N/A'}</td>
+                <td>${account.email || 'N/A'}</td>
+                <td>${account.username || 'N/A'}</td>
+                <td>
+                    <a href="${dashboardUrlBase}${account.id}/" class="btn btn-sm btn-primary">View Dashboard</a>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Fetch data from the API
+    fetch('/api/accounts/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                // Populate the publishers table
+                populateTable(data.publishers, publishersTableBody, '/publisher_dash/');
+                
+                // Populate the advertisers table
+                populateTable(data.advertisers, advertisersTableBody, '/advertiser_dash/');
+
+            } else {
+                console.error('API response data is empty or invalid.');
+                publishersTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load data.</td></tr>';
+                advertisersTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load data.</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+            publishersTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load data. Please check the server.</td></tr>';
+            advertisersTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load data. Please check the server.</td></tr>';
+        });
+});
+</script>
+{% endblock %}

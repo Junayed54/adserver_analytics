@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Advertisers</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-6">Advertisers List</h1>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center mb-6">
+                {{ error }}
+            </div>
+        {% else %}
+            {% if advertisers %}
+                <div class="overflow-x-auto shadow-lg rounded-lg">
+                    <table class="min-w-full bg-white border border-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 border-b text-left text-sm font-semibold text-gray-600">Advertiser ID</th>
+                                <th class="px-6 py-3 border-b text-left text-sm font-semibold text-gray-600">Advertiser Name</th>
+                                <th class="px-6 py-3 border-b text-left text-sm font-semibold text-gray-600">Total Campaigns</th>
+                                <th class="px-6 py-3 border-b text-left text-sm font-semibold text-gray-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for adv in advertisers %}
+                            <tr class="hover:bg-gray-100 {% if forloop.counter0|divisibleby:2 %}bg-gray-50{% endif %}">
+                                <td class="px-6 py-4 border-b text-sm">{{ adv.advertiser_id }}</td>
+                                <td class="px-6 py-4 border-b text-sm">{{ adv.advertiser_name }}</td>
+                                <td class="px-6 py-4 border-b text-sm">{{ adv.total_campaigns }}</td>
+                                <td class="px-6 py-4 border-b text-sm">
+                                    <a href="{% url 'advertiser_dashboard' adv.advertiser_id %}" 
+                                       class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-1 rounded">
+                                       View Dashboard
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-gray-600 mt-6">No advertisers found.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+
+</body>
+</html>

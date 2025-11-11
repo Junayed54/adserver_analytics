@@ -1,0 +1,223 @@
+{% extends 'Html/src/html/index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="row mb-4">
+            <h4 class="fw-bold mb-3" id="publisher_name">Loading...</h4>
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card overflow-hidden">
+                    <div class="card-body">
+                        <div class="d-flex align-items-top justify-content-between">
+                            <div>
+                                <p class="mb-1 text-muted">Total Zones</p>
+                                <h2 class="fw-bold mb-0 lh-1" id="total_zones">...</h2>
+                            </div>
+                            <div class="ms-auto">
+                                <span class="avatar avatar-md bg-warning-transparent text-warning">
+                                    <i class="ri-global-line fs-20"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card overflow-hidden">
+                    <div class="card-body">
+                        <div class="d-flex align-items-top justify-content-between">
+                            <div>
+                                <p class="mb-1 text-muted">Total Banners</p>
+                                <h2 class="fw-bold mb-0 lh-1" id="total_banners">...</h2>
+                            </div>
+                            <div class="ms-auto">
+                                <span class="avatar avatar-md bg-info-transparent text-info">
+                                    <i class="ri-image-line fs-20"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card overflow-hidden">
+                    <div class="card-body">
+                        <div class="d-flex align-items-top justify-content-between">
+                            <div>
+                                <p class="mb-1 text-muted">Total Impressions</p>
+                                <h2 class="fw-bold mb-0 lh-1" id="total_impressions">...</h2>
+                            </div>
+                            <div class="ms-auto">
+                                <span class="avatar avatar-md bg-dark-transparent text-dark">
+                                    <i class="ri-eye-line fs-20"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card overflow-hidden">
+                    <div class="card-body">
+                        <div class="d-flex align-items-top justify-content-between">
+                            <div>
+                                <p class="mb-1 text-muted">Total Clicks</p>
+                                <h2 class="fw-bold mb-0 lh-1" id="total_clicks">...</h2>
+                            </div>
+                            <div class="ms-auto">
+                                <span class="avatar avatar-md bg-danger-transparent text-danger">
+                                    <i class="ri-mouse-line fs-20"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
+                <div class="card overflow-hidden">
+                    <div class="card-body">
+                        <div class="d-flex align-items-top justify-content-between">
+                            <div>
+                                <p class="mb-1 text-muted">CTR</p>
+                                <h2 class="fw-bold mb-0 lh-1" id="ctr">...</h2>
+                            </div>
+                            <div class="ms-auto">
+                                <span class="avatar avatar-md bg-secondary-transparent text-secondary">
+                                    <i class="ri-percent-line fs-20"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-xl-12">
+                <div class="card overflow-hidden">
+                    <div class="card-header">
+                        <div class="card-title">Impressions vs. Clicks by Zone</div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="zoneStatsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-xl-12">
+                <div class="card custom-card">
+                    <div class="card-header">
+                        <div class="card-title">Zone-wise Performance</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table text-nowrap table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Zone Name</th>
+                                        <th scope="col">Total Banners</th>
+                                        <th scope="col">Impressions</th>
+                                        <th scope="col">Clicks</th>
+                                        <th scope="col">CTR</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="zone-table-body">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the publisher ID from the URL (assuming the URL is something like /dashboard/publisher/123/)
+    const path = window.location.pathname;
+    const publisherId = path.split('/').filter(Boolean).pop();
+    console.log(publisherId);
+    fetch(`/api/publisher-dashboard/${publisherId}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            if (data && data.publisher) {
+                // Update Publisher Info Cards
+                document.getElementById('publisher_name').innerText = `Publisher: ${data.publisher.name}`;
+                document.getElementById('total_zones').innerText = data.publisher.total_zones.toLocaleString();
+                document.getElementById('total_banners').innerText = data.publisher.total_banners.toLocaleString();
+                document.getElementById('total_impressions').innerText = data.publisher.total_impressions.toLocaleString();
+                document.getElementById('total_clicks').innerText = data.publisher.total_clicks.toLocaleString();
+                document.getElementById('ctr').innerText = `${data.publisher.ctr}%`;
+
+                // Create the Chart
+                const ctx = document.getElementById('zoneStatsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.chart_labels,
+                        datasets: [
+                            {
+                                label: 'Impressions',
+                                data: data.chart_impressions,
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Clicks',
+                                data: data.chart_clicks,
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Populate the Zone-wise Table
+                const tableBody = document.getElementById('zone-table-body');
+                tableBody.innerHTML = ''; // Clear existing content
+                data.zones.forEach(zone => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${zone.zone_name}</td>
+                        <td>${zone.total_banners}</td>
+                        <td>${zone.total_impressions.toLocaleString()}</td>
+                        <td>${zone.total_clicks.toLocaleString()}</td>
+                        <td>${zone.ctr}%</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+            } else {
+                console.error('API response data is empty or invalid.');
+                document.getElementById('publisher_name').innerText = 'Publisher Not Found';
+            }
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+            document.getElementById('publisher_name').innerText = 'Error Loading Data';
+        });
+});
+</script>
+{% endblock %}
