@@ -421,7 +421,7 @@ def advertiser_campaigns_view(request):
     #     database="revive_db"
     # )
 
-    return clickhouse_connect.get_client(
+    client = clickhouse_connect.get_client(
         host="localhost",
         port=8123,
         username="default",
