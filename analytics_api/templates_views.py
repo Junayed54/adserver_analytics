@@ -125,14 +125,22 @@ import pymysql
 from datetime import datetime
 
 def get_ch_client():
+    # return clickhouse_connect.get_client(
+    #     host='localhost',
+    #     port=8123,
+    #     username='revive_user',
+    #     password='revive_pass',
+    #     database='revive_db'
+    # )
     return clickhouse_connect.get_client(
-        host='localhost',
+        host="localhost",
         port=8123,
-        username='revive_user',
-        password='revive_pass',
-        database='revive_db'
+        username="default",
+        password="",
+        database="re_click_server"
     )
-
+    
+    
 def get_mysql_conn():
     return pymysql.connect(
         host='localhost',
