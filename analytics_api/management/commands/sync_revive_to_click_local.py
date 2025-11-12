@@ -24,12 +24,20 @@ class Command(BaseCommand):
 
         # Connect to ClickHouse
         try:
-            clickhouse_client = get_client(
+            # clickhouse_client = get_client(
+            #     host='localhost',
+            #     port=8123,
+            #     username='revive_user',
+            #     password='revive_pass',
+            #     database='revive_db'
+            # )
+            
+            mysql_conn = pymysql.connect(
                 host='localhost',
-                port=8123,
-                username='revive_user',
-                password='revive_pass',
-                database='revive_db'
+                user='re_server_user',
+                password='re_server_pass',
+                database='revive_db',
+                cursorclass=pymysql.cursors.DictCursor
             )
             self.stdout.write(self.style.SUCCESS("✅ Connected to ClickHouse"))
         except Exception as e:
