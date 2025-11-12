@@ -142,14 +142,23 @@ def get_ch_client():
     
     
 def get_mysql_conn():
+    # return pymysql.connect(
+    #     host='localhost',
+    #     user='revive_user',
+    #     password='revive_pass',
+    #     database='revive_db',
+    #     cursorclass=pymysql.cursors.DictCursor
+    # )
+
+
     return pymysql.connect(
         host='localhost',
-        user='revive_user',
-        password='revive_pass',
+        user='re_server_user',
+        password='re_server_pass',
         database='revive_db',
         cursorclass=pymysql.cursors.DictCursor
     )
-
+    
 # def admin_dashboard(request):
 #     client = get_ch_client()
 #     mysql_conn = get_mysql_conn()
@@ -404,14 +413,21 @@ def all_zones(request):
 
 def advertiser_campaigns_view(request):
     # 🔹 Connect to your ClickHouse server
-    client = clickhouse_connect.get_client(
-        host="localhost",    # or "127.0.0.1"
-        port=8123,           # HTTP port exposed by Docker
-        username="revive_user", 
-        password="revive_pass", 
-        database="revive_db"
-    )
+    # client = clickhouse_connect.get_client(
+    #     host="localhost",    # or "127.0.0.1"
+    #     port=8123,           # HTTP port exposed by Docker
+    #     username="revive_user", 
+    #     password="revive_pass", 
+    #     database="revive_db"
+    # )
 
+    return clickhouse_connect.get_client(
+        host="localhost",
+        port=8123,
+        username="default",
+        password="",
+        database="re_click_server"
+    )
     # 🔹 Query advertisers (clients) and campaigns
     query = """
         SELECT 
@@ -447,19 +463,35 @@ import clickhouse_connect
 import pymysql
 
 def get_ch_client():
-    return clickhouse_connect.get_client(
-        host='localhost',
-        port=8123,
-        username='revive_user',
-        password='revive_pass',
-        database='revive_db'
-    )
+    # return clickhouse_connect.get_client(
+    #     host='localhost',
+    #     port=8123,
+    #     username='revive_user',
+    #     password='revive_pass',
+    #     database='revive_db'
+    # )
 
+    return clickhouse_connect.get_client(
+        host="localhost",
+        port=8123,
+        username="default",
+        password="",
+        database="re_click_server"
+    )
 def get_mysql_conn():
+    # return pymysql.connect(
+    #     host='localhost',
+    #     user='revive_user',
+    #     password='revive_pass',
+    #     database='revive_db',
+    #     cursorclass=pymysql.cursors.DictCursor
+    # )
+    
+    
     return pymysql.connect(
         host='localhost',
-        user='revive_user',
-        password='revive_pass',
+        user='re_server_user',
+        password='re_server_pass',
         database='revive_db',
         cursorclass=pymysql.cursors.DictCursor
     )
@@ -570,12 +602,20 @@ from django.shortcuts import render
 import clickhouse_connect
 
 def get_client():
+    # return clickhouse_connect.get_client(
+    #     host="localhost",
+    #     port=8123,
+    #     username="revive_user",
+    #     password="revive_pass",
+    #     database="revive_db"
+    # )
+    
     return clickhouse_connect.get_client(
         host="localhost",
         port=8123,
-        username="revive_user",
-        password="revive_pass",
-        database="revive_db"
+        username="default",
+        password="",
+        database="re_click_server"
     )
 
 def publisher_list(request):
@@ -619,12 +659,20 @@ import clickhouse_connect
 from pypika import Query, Table, functions as fn
 
 def get_client():
+    # return clickhouse_connect.get_client(
+    #     host="localhost",
+    #     port=8123,
+    #     username="revive_user",
+    #     password="revive_pass",
+    #     database="revive_db"
+    # )
+    
     return clickhouse_connect.get_client(
         host="localhost",
         port=8123,
-        username="revive_user",
-        password="revive_pass",
-        database="revive_db"
+        username="default",
+        password="",
+        database="re_click_server"
     )
 
 def publisher_dashboard(request, publisher_id):
