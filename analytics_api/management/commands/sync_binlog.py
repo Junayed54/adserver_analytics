@@ -454,13 +454,22 @@ class Command(BaseCommand):
         # --------------------------
         # MySQL connection (schema lookup)
         # --------------------------
+        # mysql_conn = pymysql.connect(
+        #     host='localhost',
+        #     user='revive_user',
+        #     password='revive_pass',
+        #     database='revive_db',
+        #     cursorclass=pymysql.cursors.DictCursor
+        # )
+        
         mysql_conn = pymysql.connect(
             host='localhost',
-            user='revive_user',
-            password='revive_pass',
+            user='re_server_user',
+            password='re_server_pass',
             database='revive_db',
             cursorclass=pymysql.cursors.DictCursor
         )
+        
         mysql_cursor = mysql_conn.cursor()
 
         # --------------------------
