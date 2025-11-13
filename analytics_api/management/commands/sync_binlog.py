@@ -700,7 +700,7 @@ class Command(BaseCommand):
                         'passwd': 'binlog_pass',
                         'database': 'revive_db'
                     },
-                    server_id=2,
+                    server_id=1,
                     blocking=True,
                     resume_stream=True,
                     only_events=[WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent],
