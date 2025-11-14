@@ -74,7 +74,7 @@ class PublisherDashboardAPIView(APIView):
                 COALESCE(SUM(s.clicks), 0) AS total_clicks
             FROM revive_db.rv_accounts AS p
             LEFT JOIN revive_db.rv_zones AS z ON p.account_id = z.affiliateid
-            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zone_id = z.zoneid
+            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zoneid = z.zoneid
             LEFT JOIN revive_db.rv_banners AS b ON b.bannerid = s.ad_id
             LEFT JOIN revive_db.rv_campaigns AS c ON c.campaignid = b.campaignid
             LEFT JOIN revive_db.rv_clients AS cl ON cl.clientid = c.clientid
@@ -108,7 +108,7 @@ class PublisherDashboardAPIView(APIView):
                 COALESCE(SUM(s.impressions), 0) AS total_impressions,
                 COALESCE(SUM(s.clicks), 0) AS total_clicks
             FROM revive_db.rv_zones AS z
-            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zone_id = z.zoneid
+            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zoneid = z.zoneid
             LEFT JOIN revive_db.rv_banners AS b ON b.bannerid = s.ad_id
             LEFT JOIN revive_db.rv_campaigns AS c ON c.campaignid = b.campaignid
             LEFT JOIN revive_db.rv_clients AS cl ON cl.clientid = c.clientid
@@ -199,7 +199,7 @@ class AdvertiserDashboardAPIView(APIView):
                 COALESCE(SUM(s.impressions), 0) AS total_impressions,
                 COALESCE(SUM(s.clicks), 0) AS total_clicks
             FROM revive_db.rv_zones AS z
-            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zone_id = z.zoneid
+            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zoneid = z.zoneid
             LEFT JOIN revive_db.rv_banners AS b ON b.bannerid = s.ad_id
             LEFT JOIN revive_db.rv_campaigns AS c ON c.campaignid = b.campaignid
             WHERE c.clientid = {advertiser_id}
