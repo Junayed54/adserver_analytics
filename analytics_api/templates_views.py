@@ -683,6 +683,99 @@ def zone_stats(request, zone_id):
 
 
 
+# def advertiser_dashboard(request, advertiser_id):
+#     client = get_client()
+
+#     # --- 1. Advertiser Overview ---
+#     query_info = f"""
+#         SELECT 
+#             cl.clientid AS advertiser_id,
+#             cl.clientname AS name,
+#             COUNT(DISTINCT c.campaignid) AS total_campaigns,
+#             COUNT(DISTINCT b.bannerid) AS total_banners,
+#             COUNT(DISTINCT s.zoneid) AS total_zones,
+#             ifNull(SUM(s.impressions), 0) AS total_impressions,
+#             ifNull(SUM(s.clicks), 0) AS total_clicks
+#         FROM re_click_server.rv_clients AS cl
+#         LEFT JOIN re_click_server.rv_campaigns AS c 
+#             ON cl.clientid = c.clientid
+#         LEFT JOIN re_click_server.rv_banners AS b 
+#             ON b.campaignid = c.campaignid
+#         LEFT JOIN re_click_server.rv_data_summary_ad_hourly AS s 
+#             ON s.ad_id = b.bannerid
+#         WHERE cl.clientid = {advertiser_id}
+#         GROUP BY cl.clientid, cl.clientname
+#     """
+
+#     result_info = client.query(query_info).result_rows
+
+#     advertiser = None
+#     if result_info:
+#         row = result_info[0]
+#         total_impressions = int(row[5] or 0)
+#         total_clicks = int(row[6] or 0)
+#         advertiser = {
+#             "advertiser_id": row[0],
+#             "name": row[1],
+#             "total_campaigns": row[2],
+#             "total_banners": row[3],
+#             "total_zones": row[4],
+#             "total_impressions": total_impressions,
+#             "total_clicks": total_clicks,
+#             "ctr": round((total_clicks / total_impressions) * 100, 2) if total_impressions else 0
+#         }
+
+#     # --- 2. Zone-Level Breakdown ---
+#     query_zones = f"""
+#         SELECT 
+#             z.zoneid AS zone_id,
+#             z.zonename AS zone_name,
+#             COUNT(DISTINCT b.bannerid) AS total_banners,
+#             COALESCE(SUM(s.impressions), 0) AS total_impressions,
+#             COALESCE(SUM(s.clicks), 0) AS total_clicks
+#         FROM re_click_server.rv_data_summary_ad_hourly AS s
+#         JOIN re_click_server.rv_zones AS z ON z.zoneid = s.zone_id
+#         JOIN re_click_server.rv_banners AS b ON b.bannerid = s.ad_id
+#         JOIN re_click_server.rv_campaigns AS c ON c.campaignid = b.campaignid
+#         JOIN re_click_server.rv_clients AS cl ON cl.clientid = c.clientid
+#         WHERE cl.clientid = {advertiser_id}
+#         GROUP BY z.zoneid, z.zonename
+#         ORDER BY total_impressions DESC
+#     """
+
+#     zone_result = client.query(query_zones).result_rows
+
+#     zones = []
+#     chart_labels = []
+#     chart_impressions = []
+#     chart_clicks = []
+
+#     for row in zone_result:
+#         zone_id, zone_name, total_banners, total_impressions, total_clicks = row
+#         total_impressions = int(total_impressions or 0)
+#         total_clicks = int(total_clicks or 0)
+#         ctr = round((total_clicks / total_impressions) * 100, 2) if total_impressions else 0
+#         zones.append({
+#             "zone_id": zone_id,
+#             "zone_name": zone_name,
+#             "total_banners": total_banners,
+#             "total_impressions": total_impressions,
+#             "total_clicks": total_clicks,
+#             "ctr": ctr
+#         })
+#         chart_labels.append(zone_name)
+#         chart_impressions.append(total_impressions)
+#         chart_clicks.append(total_clicks)
+
+#     return render(request, "advertiser_dashboard.html", {
+#         "advertiser": advertiser,
+#         "zones": zones,
+#         "chart_labels": chart_labels,
+#         "chart_impressions": chart_impressions,
+#         "chart_clicks": chart_clicks
+#     })
+
+
 def advertiser_dashboard(request, advertiser_id):
     client = get_client()
 
@@ -693,7 +786,7 @@ def advertiser_dashboard(request, advertiser_id):
             cl.clientname AS name,
             COUNT(DISTINCT c.campaignid) AS total_campaigns,
             COUNT(DISTINCT b.bannerid) AS total_banners,
-            COUNT(DISTINCT s.zoneid) AS total_zones,
+            COUNT(DISTINCT s.zone_id) AS total_zones,
             ifNull(SUM(s.impressions), 0) AS total_impressions,
             ifNull(SUM(s.clicks), 0) AS total_clicks
         FROM re_click_server.rv_clients AS cl
@@ -731,8 +824,8 @@ def advertiser_dashboard(request, advertiser_id):
             z.zoneid AS zone_id,
             z.zonename AS zone_name,
             COUNT(DISTINCT b.bannerid) AS total_banners,
-            COALESCE(SUM(s.impressions), 0) AS total_impressions,
-            COALESCE(SUM(s.clicks), 0) AS total_clicks
+            ifNull(SUM(s.impressions), 0) AS total_impressions,
+            ifNull(SUM(s.clicks), 0) AS total_clicks
         FROM re_click_server.rv_data_summary_ad_hourly AS s
         JOIN re_click_server.rv_zones AS z ON z.zoneid = s.zone_id
         JOIN re_click_server.rv_banners AS b ON b.bannerid = s.ad_id
@@ -774,8 +867,6 @@ def advertiser_dashboard(request, advertiser_id):
         "chart_impressions": chart_impressions,
         "chart_clicks": chart_clicks
     })
-
-
 
 
 
