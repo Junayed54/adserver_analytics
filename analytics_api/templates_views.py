@@ -701,7 +701,7 @@ def advertiser_dashboard(request, advertiser_id):
         LEFT JOIN re_click_server.rv_banners AS b ON b.campaignid = c.campaignid
         LEFT JOIN re_click_server.rv_data_summary_ad_hourly AS s ON s.ad_id = b.bannerid
         WHERE cl.clientid = {advertiser_id}
-        GROUP BY cl.clientid, cl.clientname;
+        GROUP BY cl.clientid, cl.clientname
 
     """
 
