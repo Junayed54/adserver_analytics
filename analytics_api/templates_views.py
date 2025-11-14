@@ -697,12 +697,14 @@ def advertiser_dashboard(request, advertiser_id):
             ifNull(SUM(s.impressions), 0) AS total_impressions,
             ifNull(SUM(s.clicks), 0) AS total_clicks
         FROM re_click_server.rv_clients AS cl
-        LEFT JOIN re_click_server.rv_campaigns AS c ON cl.clientid = c.clientid
-        LEFT JOIN re_click_server.rv_banners AS b ON b.campaignid = c.campaignid
-        LEFT JOIN re_click_server.rv_data_summary_ad_hourly AS s ON s.ad_id = b.bannerid
+        LEFT JOIN re_click_server.rv_campaigns AS c 
+            ON cl.clientid = c.clientid
+        LEFT JOIN re_click_server.rv_banners AS b 
+            ON b.campaignid = c.campaignid
+        LEFT JOIN re_click_server.rv_data_summary_ad_hourly AS s 
+            ON s.ad_id = b.bannerid
         WHERE cl.clientid = {advertiser_id}
         GROUP BY cl.clientid, cl.clientname
-
     """
 
     result_info = client.query(query_info).result_rows
