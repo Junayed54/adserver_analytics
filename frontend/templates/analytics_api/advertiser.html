@@ -5,18 +5,18 @@
 <div class="row">
     <div class="col-xl-12">
         <div class="row mb-4">
-            <h4 class="fw-bold mb-3" id="publisher_name">Loading...</h4>
+            <h4 class="fw-bold mb-3" id="advertiser_name">Loading...</h4>
             <div class="col-xl-3 col-md-6 mb-3">
                 <div class="card overflow-hidden">
                     <div class="card-body">
                         <div class="d-flex align-items-top justify-content-between">
                             <div>
-                                <p class="mb-1 text-muted">Total Zones</p>
-                                <h2 class="fw-bold mb-0 lh-1" id="total_zones">...</h2>
+                                <p class="mb-1 text-muted">Total Campaigns</p>
+                                <h2 class="fw-bold mb-0 lh-1" id="total_campaigns">...</h2>
                             </div>
                             <div class="ms-auto">
-                                <span class="avatar avatar-md bg-warning-transparent text-warning">
-                                    <i class="ri-global-line fs-20"></i>
+                                <span class="avatar avatar-md bg-success-transparent text-success">
+                                    <i class="ri-megaphone-line fs-20"></i>
                                 </span>
                             </div>
                         </div>
@@ -74,7 +74,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
+             <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
                 <div class="card overflow-hidden">
                     <div class="card-body">
                         <div class="d-flex align-items-top justify-content-between">
@@ -137,13 +137,14 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get the publisher ID from the URL (assuming the URL is something like /dashboard/publisher/123/)
+    document.addEventListener('DOMContentLoaded', function() {
     const path = window.location.pathname;
-    const publisherId = path.split('/').filter(Boolean).pop();
-    console.log(publisherId);
-    fetch(`/api/publisher-dashboard/${publisherId}/`)
+    const advertiserId = path.split('/').filter(Boolean).pop();
+    
+    fetch(`/api/advertiser-dashboard/${advertiserId}/`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -151,15 +152,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log(data);
-            if (data && data.publisher) {
-                // Update Publisher Info Cards
-                document.getElementById('publisher_name').innerText = `Publisher: ${data.publisher.name}`;
-                document.getElementById('total_zones').innerText = data.publisher.total_zones.toLocaleString();
-                document.getElementById('total_banners').innerText = data.publisher.total_banners.toLocaleString();
-                document.getElementById('total_impressions').innerText = data.publisher.total_impressions.toLocaleString();
-                document.getElementById('total_clicks').innerText = data.publisher.total_clicks.toLocaleString();
-                document.getElementById('ctr').innerText = `${data.publisher.ctr}%`;
+            if (data && data.advertiser) {
+                // Update Advertiser Info Cards
+                document.getElementById('advertiser_name').innerText = `Advertiser: ${data.advertiser.name}`;
+                document.getElementById('total_campaigns').innerText = data.advertiser.total_campaigns.toLocaleString();
+                document.getElementById('total_banners').innerText = data.advertiser.total_banners.toLocaleString();
+                document.getElementById('total_impressions').innerText = data.advertiser.total_impressions.toLocaleString();
+                document.getElementById('total_clicks').innerText = data.advertiser.total_clicks.toLocaleString();
+                document.getElementById('ctr').innerText = `${data.advertiser.ctr}%`;
 
                 // Create the Chart
                 const ctx = document.getElementById('zoneStatsChart').getContext('2d');
@@ -211,12 +211,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             } else {
                 console.error('API response data is empty or invalid.');
-                document.getElementById('publisher_name').innerText = 'Publisher Not Found';
+                document.getElementById('advertiser_name').innerText = 'Advertiser Not Found';
             }
         })
         .catch(error => {
             console.error('There was a problem with the fetch operation:', error);
-            document.getElementById('publisher_name').innerText = 'Error Loading Data';
+            document.getElementById('advertiser_name').innerText = 'Error Loading Data';
         });
 });
 </script>

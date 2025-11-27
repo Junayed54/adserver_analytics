@@ -653,11 +653,11 @@
                     const revive_id = response.revive_id;
                     console.log(response);
                     if (role === "admin") {
-                        window.location.href = "/admin_dash/";
+                        window.location.href = "/admin-dashboard/";
                     } else if (role === "advertiser") {
-                        window.location.href = `/advertiser_dash/${revive_id}/`;
+                        window.location.href = `/advertiser-dashboard/${revive_id}/`;
                     } else if (role === "publisher") {
-                        window.location.href = `/publisher_dash/${revive_id}/`;
+                        window.location.href = `/publisher-dashboard/${revive_id}/`;
                     } else {
                         alert("Unknown user role!");
                     }                } else {

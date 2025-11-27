@@ -13,7 +13,7 @@ def get_client():
     #     port=8123,
     #     username="revive_user",
     #     password="revive_pass",
-    #     database="revive_db"
+    #     database="re_click_server"
     # )
     return clickhouse_connect.get_client(
         host="localhost",
@@ -72,12 +72,17 @@ class PublisherDashboardAPIView(APIView):
                 COUNT(DISTINCT b.bannerid) AS total_banners,
                 COALESCE(SUM(s.impressions), 0) AS total_impressions,
                 COALESCE(SUM(s.clicks), 0) AS total_clicks
-            FROM revive_db.rv_accounts AS p
-            LEFT JOIN revive_db.rv_zones AS z ON p.account_id = z.affiliateid
-            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zoneid = z.zoneid
-            LEFT JOIN revive_db.rv_banners AS b ON b.bannerid = s.ad_id
-            LEFT JOIN revive_db.rv_campaigns AS c ON c.campaignid = b.campaignid
-            LEFT JOIN revive_db.rv_clients AS cl ON cl.clientid = c.clientid
+            FROM re_click_server.rv_accounts AS p
+            LEFT JOIN re_click_server.rv_zones AS z 
+                ON p.account_id = z.affiliateid
+            LEFT JOIN re_click_server.rv_data_summary_ad_hourly AS s 
+                ON s.zone_id = z.zoneid
+            LEFT JOIN re_click_server.rv_banners AS b 
+                ON b.bannerid = s.ad_id
+            LEFT JOIN re_click_server.rv_campaigns AS c 
+                ON c.campaignid = b.campaignid
+            LEFT JOIN re_click_server.rv_clients AS cl 
+                ON cl.clientid = c.clientid
             WHERE p.account_id = {publisher_id}
             GROUP BY p.account_id, p.account_name
         """
@@ -89,6 +94,7 @@ class PublisherDashboardAPIView(APIView):
             row = result_info[0]
             total_impressions = int(row[4] or 0)
             total_clicks = int(row[5] or 0)
+
             publisher = {
                 "publisher_id": row[0],
                 "name": row[1],
@@ -107,11 +113,15 @@ class PublisherDashboardAPIView(APIView):
                 COUNT(DISTINCT b.bannerid) AS total_banners,
                 COALESCE(SUM(s.impressions), 0) AS total_impressions,
                 COALESCE(SUM(s.clicks), 0) AS total_clicks
-            FROM revive_db.rv_zones AS z
-            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zoneid = z.zoneid
-            LEFT JOIN revive_db.rv_banners AS b ON b.bannerid = s.ad_id
-            LEFT JOIN revive_db.rv_campaigns AS c ON c.campaignid = b.campaignid
-            LEFT JOIN revive_db.rv_clients AS cl ON cl.clientid = c.clientid
+            FROM re_click_server.rv_zones AS z
+            LEFT JOIN re_click_server.rv_data_summary_ad_hourly AS s 
+                ON s.zone_id = z.zoneid
+            LEFT JOIN re_click_server.rv_banners AS b 
+                ON b.bannerid = s.ad_id
+            LEFT JOIN re_click_server.rv_campaigns AS c 
+                ON c.campaignid = b.campaignid
+            LEFT JOIN re_click_server.rv_clients AS cl 
+                ON cl.clientid = c.clientid
             WHERE z.affiliateid = {publisher_id}
             GROUP BY z.zoneid, z.zonename
             ORDER BY total_impressions DESC
@@ -128,7 +138,9 @@ class PublisherDashboardAPIView(APIView):
             zone_id, zone_name, total_banners, total_impressions, total_clicks = row
             total_impressions = int(total_impressions or 0)
             total_clicks = int(total_clicks or 0)
+
             ctr = round((total_clicks / total_impressions) * 100, 2) if total_impressions else 0
+
             zones.append({
                 "zone_id": zone_id,
                 "zone_name": zone_name,
@@ -137,6 +149,7 @@ class PublisherDashboardAPIView(APIView):
                 "total_clicks": total_clicks,
                 "ctr": ctr
             })
+
             chart_labels.append(zone_name)
             chart_impressions.append(total_impressions)
             chart_clicks.append(total_clicks)
@@ -149,36 +162,40 @@ class PublisherDashboardAPIView(APIView):
             "chart_clicks": chart_clicks
         })
 
+
 class AdvertiserDashboardAPIView(APIView):
     def get(self, request, advertiser_id):
         client = get_client()
 
-        # --- 1. Advertiser Summary ---
+        # --- 1. Advertiser Overview ---
         query_info = f"""
             SELECT 
                 cl.clientid AS advertiser_id,
                 cl.clientname AS name,
                 COUNT(DISTINCT c.campaignid) AS total_campaigns,
                 COUNT(DISTINCT b.bannerid) AS total_banners,
-                COUNT(DISTINCT z.zoneid) AS total_zones,
-                COALESCE(SUM(s.impressions), 0) AS total_impressions,
-                COALESCE(SUM(s.clicks), 0) AS total_clicks
-            FROM revive_db.rv_clients AS cl
-            LEFT JOIN revive_db.rv_campaigns AS c ON cl.clientid = c.clientid
-            LEFT JOIN revive_db.rv_banners AS b ON b.campaignid = c.campaignid
-            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.ad_id = b.bannerid
-            LEFT JOIN revive_db.rv_zones AS z ON z.zoneid = s.zone_id
+                COUNT(DISTINCT s.zone_id) AS total_zones,
+                ifNull(SUM(s.impressions), 0) AS total_impressions,
+                ifNull(SUM(s.clicks), 0) AS total_clicks
+            FROM re_click_server.rv_clients AS cl
+            LEFT JOIN re_click_server.rv_campaigns AS c 
+                ON cl.clientid = c.clientid
+            LEFT JOIN re_click_server.rv_banners AS b 
+                ON b.campaignid = c.campaignid
+            LEFT JOIN re_click_server.rv_data_summary_ad_hourly AS s 
+                ON s.ad_id = b.bannerid
             WHERE cl.clientid = {advertiser_id}
             GROUP BY cl.clientid, cl.clientname
         """
 
         result_info = client.query(query_info).result_rows
 
-        advertiser = {}
+        advertiser = None
         if result_info:
             row = result_info[0]
             total_impressions = int(row[5] or 0)
             total_clicks = int(row[6] or 0)
+
             advertiser = {
                 "advertiser_id": row[0],
                 "name": row[1],
@@ -190,55 +207,48 @@ class AdvertiserDashboardAPIView(APIView):
                 "ctr": round((total_clicks / total_impressions) * 100, 2) if total_impressions else 0
             }
 
-        # --- 2. Zone-wise Breakdown ---
+        # --- 2. Zone-Level Breakdown ---
         query_zones = f"""
             SELECT 
                 z.zoneid AS zone_id,
                 z.zonename AS zone_name,
                 COUNT(DISTINCT b.bannerid) AS total_banners,
-                COALESCE(SUM(s.impressions), 0) AS total_impressions,
-                COALESCE(SUM(s.clicks), 0) AS total_clicks
-            FROM revive_db.rv_zones AS z
-            LEFT JOIN revive_db.rv_data_summary_ad_hourly AS s ON s.zoneid = z.zoneid
-            LEFT JOIN revive_db.rv_banners AS b ON b.bannerid = s.ad_id
-            LEFT JOIN revive_db.rv_campaigns AS c ON c.campaignid = b.campaignid
-            WHERE c.clientid = {advertiser_id}
+                ifNull(SUM(s.impressions), 0) AS total_impressions,
+                ifNull(SUM(s.clicks), 0) AS total_clicks
+            FROM re_click_server.rv_data_summary_ad_hourly AS s
+            JOIN re_click_server.rv_zones AS z ON z.zoneid = s.zone_id
+            JOIN re_click_server.rv_banners AS b ON b.bannerid = s.ad_id
+            JOIN re_click_server.rv_campaigns AS c ON c.campaignid = b.campaignid
+            JOIN re_click_server.rv_clients AS cl ON cl.clientid = c.clientid
+            WHERE cl.clientid = {advertiser_id}
             GROUP BY z.zoneid, z.zonename
             ORDER BY total_impressions DESC
         """
 
-        zone_result = client.query(query_zones).result_rows
+        zone_rows = client.query(query_zones).result_rows
 
         zones = []
-        chart_labels = []
-        chart_impressions = []
-        chart_clicks = []
+        for row in zone_rows:
+            zone_id, zone_name, total_banners, impressions, clicks = row
+            impressions = int(impressions or 0)
+            clicks = int(clicks or 0)
 
-        for row in zone_result:
-            zone_id, zone_name, total_banners, total_impressions, total_clicks = row
-            total_impressions = int(total_impressions or 0)
-            total_clicks = int(total_clicks or 0)
-            ctr = round((total_clicks / total_impressions) * 100, 2) if total_impressions else 0
+            ctr_val = round((clicks / impressions) * 100, 2) if impressions else 0
+
             zones.append({
                 "zone_id": zone_id,
                 "zone_name": zone_name,
                 "total_banners": total_banners,
-                "total_impressions": total_impressions,
-                "total_clicks": total_clicks,
-                "ctr": ctr
+                "total_impressions": impressions,
+                "total_clicks": clicks,
+                "ctr": ctr_val
             })
-            chart_labels.append(zone_name)
-            chart_impressions.append(total_impressions)
-            chart_clicks.append(total_clicks)
 
         return Response({
             "advertiser": advertiser,
             "zones": zones,
-            "chart_labels": chart_labels,
-            "chart_impressions": chart_impressions,
-            "chart_clicks": chart_clicks
         })
-        
+
         
         
 class AccountListAPIView(APIView):
@@ -252,7 +262,7 @@ class AccountListAPIView(APIView):
                 account_name AS name,
                 account_type,
                 'publisher' AS type
-            FROM revive_db.rv_accounts
+            FROM re_click_server.rv_accounts
             ORDER BY account_name ASC
         """
         publisher_rows = client.query(query_publishers).result_rows
@@ -275,7 +285,7 @@ class AccountListAPIView(APIView):
                 email,
                 updated,
                 'advertiser' AS type
-            FROM revive_db.rv_clients
+            FROM re_click_server.rv_clients
             ORDER BY clientname ASC
         """
         advertiser_rows = client.query(query_advertisers).result_rows
