@@ -700,11 +700,17 @@ class Command(BaseCommand):
                         'passwd': 'binlog_pass',
                         'database': 'revive_db'
                     },
-                    server_id=1,
+                    # server_id=1,
+                    # blocking=True,
+                    # resume_stream=True,
+                    # only_events=[WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent],
+                    # only_schemas=None
+                    
+                    server_id=1001,  # unique
                     blocking=True,
                     resume_stream=True,
-                    only_events=[WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent],
-                    only_schemas=None
+                    only_schemas=['revive_db'],
+                    only_events=[WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent]
                 )
 
                 self.stdout.write(self.style.SUCCESS("🚀 Binlog stream started"))
